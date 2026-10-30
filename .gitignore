@@ -1,0 +1,14 @@
+# зависимости
+node_modules/
+
+# секреты: токены, пароли, строка подключения
+.env
+.env.*
+!.env.example
+
+# служебное
+.tmp/
+.npm-cache/
+server.log
+*.log
+.DS_Store

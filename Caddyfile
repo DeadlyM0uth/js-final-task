@@ -1,0 +1,6 @@
+# Caddy сам получает и продлевает сертификат Let's Encrypt —
+# нужен только открытый порт 80/443 и A-запись домена на IP сервера.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:3000
+}

@@ -1,0 +1,21 @@
+{
+  "name": "todo-students",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Список дел: Node.js + Express + MongoDB (итоговая практическая работа)",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "dev": "node --env-file-if-exists=.env --watch src/server.js",
+    "init:db": "node --env-file-if-exists=.env scripts/init-db.js",
+    "token:gen": "node scripts/generate-token.js",
+    "test:smoke": "node --env-file-if-exists=.env scripts/smoke-test.js"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "mongodb": "^7.8.0"
+  }
+}

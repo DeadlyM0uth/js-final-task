@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Список дел</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <h1>Список дел</h1>
+
+      <section class="card" aria-labelledby="auth-title">
+        <h2 id="auth-title">Доступ</h2>
+        <!-- Токен вводит пользователь, в исходниках страницы его нет. -->
+        <form id="auth-form" class="row" autocomplete="off">
+          <label class="field">
+            <span>Токен API</span>
+            <input
+              id="token"
+              name="token"
+              type="password"
+              spellcheck="false"
+              autocomplete="off"
+              aria-describedby="auth-hint"
+            />
+          </label>
+          <button type="submit" class="primary">Войти</button>
+        </form>
+        <p id="auth-hint" class="hint">Токен выдаётся преподавателю/автору отдельно и хранится в .env на сервере.</p>
+        <p id="author" class="author" aria-live="polite"></p>
+      </section>
+
+      <section class="card" aria-labelledby="tasks-title">
+        <h2 id="tasks-title">Дела</h2>
+
+        <form id="run-form" class="row" autocomplete="off">
+          <label class="field">
+            <span>runId</span>
+            <input id="runId" name="runId" type="text" value="web" spellcheck="false" />
+          </label>
+          <button type="submit">Обновить</button>
+        </form>
+
+        <form id="add-form" class="row" autocomplete="off">
+          <label class="field field-wide">
+            <span>Новое дело</span>
+            <input id="new-title" name="title" type="text" maxlength="200" placeholder="Что нужно сделать?" />
+          </label>
+          <button type="submit" class="primary">Добавить</button>
+        </form>
+
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+
+        <ul id="tasks" class="tasks"></ul>
+        <p id="empty" class="hint" hidden>Пока пусто.</p>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

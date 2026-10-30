@@ -1,0 +1,95 @@
+# Стек: MongoDB + приложение Express + Caddy (автоматический HTTPS).
+# Запуск: cp .env.example .env && nano .env && docker compose up -d --build
+name: todo-students
+
+services:
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:?задайте MONGO_ROOT_USER в .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?задайте MONGO_ROOT_PASSWORD в .env}
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      # Наружу не открываем: доступ только с сервера и через SSH-туннель проверяющего.
+      - "127.0.0.1:${MONGO_PUBLISH_PORT:-27017}:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_TOKEN: ${API_TOKEN:?задайте API_TOKEN в .env}
+      OWNER_LOGIN: ${OWNER_LOGIN:?задайте OWNER_LOGIN в .env}
+      OWNER_FULL_NAME: ${OWNER_FULL_NAME:?задайте OWNER_FULL_NAME в .env}
+      DB_NAME: ${DB_NAME:-todo_students}
+      COLLECTION_NAME: ${COLLECTION_NAME:-tasks}
+      # Пароли БД должны состоять из символов A-Z a-z 0-9 (иначе кодируйте в URL).
+      MONGO_URI: mongodb://${MONGO_APP_USER}:${MONGO_APP_PASSWORD}@mongo:27017/${DB_NAME:-todo_students}?authSource=${DB_NAME:-todo_students}
+    expose:
+      - "3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/healthz').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Одноразовая инициализация БД: коллекция, индексы, пользователи, персональное дело.
+  # Запуск: docker compose run --rm db-init
+  db-init:
+    build: .
+    profiles: ["tools"]
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      DB_NAME: ${DB_NAME:-todo_students}
+      COLLECTION_NAME: ${COLLECTION_NAME:-tasks}
+      OWNER_LOGIN: ${OWNER_LOGIN}
+      MONGO_APP_USER: ${MONGO_APP_USER}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
+      MONGO_CHECKER_USER: ${MONGO_CHECKER_USER}
+      MONGO_CHECKER_PASSWORD: ${MONGO_CHECKER_PASSWORD}
+      MONGO_URI: mongodb://${MONGO_APP_USER}:${MONGO_APP_PASSWORD}@mongo:27017/${DB_NAME:-todo_students}?authSource=${DB_NAME:-todo_students}
+      MONGO_ADMIN_URI: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongo:27017/?authSource=admin
+    command: ["npm", "run", "init:db"]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_started
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?задайте DOMAIN в .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  mongo-data:
+  caddy-data:
+  caddy-config:
