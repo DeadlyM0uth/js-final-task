@@ -12,3 +12,6 @@ node_modules/
 server.log
 *.log
 .DS_Store
+
+# задание преподавателя
+2026-10-24-todo-students.pdf
